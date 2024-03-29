@@ -70,3 +70,15 @@ while deve_continuar:
 
 # encerrando módulos de Pygame
 pygame.quit()
+
+
+
+
+
+
+
+
+
+
+
+
