@@ -1,85 +1,159 @@
 import pygame
 
-# definindo as cores
-PRETO = (0, 0, 0)
-AMARELO = (255, 255, 0)
-VERMELHO = (255, 0, 0)
-VERDE = (0, 255, 0)
-AZUL = (0, 0, 255)
-BRANCO = (255, 255, 255)
+# Inicializando pygame
+pygame.init()
 
-# definindo outras constantes do jogo
-LARGURAJANELA = 500
-ALTURAJANELA = 400
+# Definindo as dimensões da janela
+LARGURA_JANELA = 500
+ALTURA_JANELA = 400
 
-# definindo a função mover(), que registra a posição de uma figura
-def mover(figura, dim_janela):
+# Carregando as imagens do cenário
+imagem_cenario1 = pygame.image.load('Imagens/cenario1.png')
+imagem_cenario2 = pygame.image.load('Imagens/cenario2.png')
+imagem_cenario3 = pygame.image.load('Imagens/cenario3.png')
+imagem_cenario4 = pygame.image.load('Imagens/cenario4.png')
+
+# Carregando as imagens do peixe
+imagemPeixe = pygame.image.load('imagens/peixe.png')
+
+# Ajustando o tamanho das imagens do cenário
+imagem_cenario1 = pygame.transform.scale(imagem_cenario1, (LARGURA_JANELA, ALTURA_JANELA))
+imagem_cenario2 = pygame.transform.scale(imagem_cenario2, (LARGURA_JANELA, ALTURA_JANELA))
+imagem_cenario3 = pygame.transform.scale(imagem_cenario3, (LARGURA_JANELA, ALTURA_JANELA))
+imagem_cenario4 = pygame.transform.scale(imagem_cenario4, (LARGURA_JANELA, ALTURA_JANELA))
+
+# Definindo algumas constantes
+LARGURAPEIXE = imagemPeixe.get_width()
+ALTURAPEIXE = imagemPeixe.get_height()
+VEL = 6
+ITERACOES = 30
+# Definindo a função moverJogador(), que registra a posição do jogador
+def moverJogador(jogador, teclas, dim_janela):
     borda_esquerda = 0
     borda_superior = 0
     borda_direita = dim_janela[0]
     borda_inferior = dim_janela[1]
-    if figura['objRect'].top < borda_superior or figura['objRect'].bottom > borda_inferior:
-        # figura atingiu o topo ou a base da janela
-        figura['vel'][1] = -figura['vel'][1]
-    if figura['objRect'].left < borda_esquerda or figura['objRect'].right > borda_direita:
-        # figura atingiu o lado esquerdo ou direito da janela
-        figura['vel'][0] = -figura['vel'][0]
-    figura['objRect'].x += figura['vel'][0]
-    figura['objRect'].y += figura['vel'][1]
+    if teclas['esquerda'] and jogador['objRect'].left > borda_esquerda-100:
+        jogador['objRect'].x -= jogador['vel']
+    if teclas['direita'] and jogador['objRect'].right < borda_direita+120:
+        jogador['objRect'].x += jogador['vel']
+    if teclas['cima'] and jogador['objRect'].top > borda_superior-117:
+        jogador['objRect'].y -= jogador['vel']
+    if teclas['baixo'] and jogador['objRect'].bottom < borda_inferior+105:
+        jogador['objRect'].y += jogador['vel']
+    #Tive que colocar esses valores somando e subtraindo pq o tamanho do peixe bagunça os limites da tela
 
-# inicializando pygame
-pygame.init()
+# Definindo a função moverPeixe(), que registra a posição do peixe
+def moverPeixe(peixe):
+    peixe['objRect'].x += peixe['vel']
 
-# criando um objeto pygame.time.Clock
 relogio = pygame.time.Clock()
 
-# criando a janela
-janela = pygame.display.set_mode((LARGURAJANELA, ALTURAJANELA))
-pygame.display.set_caption('Colisão')
+# Criando a janela
+janela = pygame.display.set_mode((LARGURA_JANELA, ALTURA_JANELA))
+pygame.display.set_caption('Imagem e Som')
 
-# criando os blocos e colocando-os em uma lista
-b1 = {'objRect': pygame.Rect(375, 80, 40, 40), 'cor': VERMELHO, 'vel': [0,2]}
-b2 = {'objRect': pygame.Rect(175, 200, 40, 40), 'cor': VERDE, 'vel': [0,-3]}
-b3 = {'objRect': pygame.Rect(275, 150, 40, 40), 'cor': AMARELO, 'vel': [0,-1]}
-b4 = {'objRect': pygame.Rect(75, 150, 40, 40), 'cor': AZUL, 'vel': [0,4]}
-blocos = [b1, b2, b3, b4]
+# Posicionando os cenários
+posicao_cenario1 = (0, 0)
+posicao_cenario2 = (LARGURA_JANELA, 0)
+posicao_cenario3 = (2 * LARGURA_JANELA, 0)
+posicao_cenario4 = (3 * LARGURA_JANELA, 0)
 
-# criando a bola
-bola = {'objRect': pygame.Rect(270, 330, 30, 30), 'cor': BRANCO, 'vel': [3,3]}
+# Velocidade do movimento do cenário
+velocidade_cenario = 1
 
+# Criando jogador
+jogador = {'objRect': pygame.Rect(10, 45, LARGURAPEIXE, ALTURAPEIXE), 'imagem': imagemPeixe, 'vel': VEL}
+
+# Definindo o dicionário que guardará as direções pressionadas
+teclas = {'esquerda': False, 'direita': False, 'cima': False, 'baixo': False}
+
+# Inicializando variavel de controle do jogo
 deve_continuar = True
 
-# loop do jogo
+# Variável de controle para pausar o jogo
+pausado = False
+
+# Carregando e reproduzindo a música de fundo em loop
+pygame.mixer.music.load('Som/musicadefundo.wav')
+pygame.mixer.music.play(-1)  # coloca -1 para reprodução ficar em looping
+
+# É a função para mover o cenario do Jogo
+def mover_cenario():
+    global posicao_cenario1, posicao_cenario2, posicao_cenario3, posicao_cenario4 #tenho que declarar como globar pq vou mexer nas posicoes e precisa salvar
+    posicao_cenario1 = (posicao_cenario1[0] - velocidade_cenario, posicao_cenario1[1]) # posicao 0 significa que esta em x e eu tiro a velocidade, ou seja vou diminuindo os pixels para dar sensação que esta andando enquanto na posicao 1 que é o y, ele está parado
+    posicao_cenario2 = (posicao_cenario2[0] - velocidade_cenario, posicao_cenario2[1])
+    posicao_cenario3 = (posicao_cenario3[0] - velocidade_cenario, posicao_cenario3[1])
+    posicao_cenario4 = (posicao_cenario4[0] - velocidade_cenario, posicao_cenario4[1])
+
+    # Aqui ele faz as comparações, ou seja, se a primeira imagem sair completamente da tela que é a soma da posicao mais o cenario, ele coloca depois direita do quarto cenário para ficar em looping
+    if posicao_cenario1[0] + LARGURA_JANELA < 0:
+        posicao_cenario1 = (posicao_cenario4[0] + LARGURA_JANELA, posicao_cenario1[1])
+
+    # Se a segunda imagem sair completamente da tela, mova-a para a direita da primeira imagem
+    if posicao_cenario2[0] + LARGURA_JANELA < 0:
+        posicao_cenario2 = (posicao_cenario1[0] + LARGURA_JANELA, posicao_cenario2[1])
+
+    # Se a terceira imagem sair completamente da tela, mova-a para a direita da segunda imagem
+    if posicao_cenario3[0] + LARGURA_JANELA < 0:
+        posicao_cenario3 = (posicao_cenario2[0] + LARGURA_JANELA, posicao_cenario3[1])
+
+    # Se a quarta imagem sair completamente da tela, mova-a para a direita da terceira imagem
+    if posicao_cenario4[0] + LARGURA_JANELA < 0:
+        posicao_cenario4 = (posicao_cenario3[0] + LARGURA_JANELA, posicao_cenario4[1])
+
+# Loop do jogo
 while deve_continuar:
-    # checando se ocorreu um evento QUIT
+    # Checando os eventos
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             deve_continuar = False
+        # Quando uma tecla é pressionada
+        if evento.type == pygame.KEYDOWN:
+            if evento.key == pygame.K_ESCAPE:
+                deve_continuar = False
+            if evento.key == pygame.K_LEFT or evento.key == pygame.K_a:
+                teclas['esquerda'] = True
+            if evento.key == pygame.K_RIGHT or evento.key == pygame.K_d:
+                teclas['direita'] = True
+            if evento.key == pygame.K_UP or evento.key == pygame.K_w:
+                teclas['cima'] = True
+            if evento.key == pygame.K_DOWN or evento.key == pygame.K_s:
+                teclas['baixo'] = True
+            # Pausa do jogo quando a tecla "P" é pressionada
+            if evento.key == pygame.K_p:
+                pausado = not pausado
+                pygame.mixer.music.pause() if pausado else pygame.mixer.music.unpause()
+        # Quando uma tecla é solta
+        if evento.type == pygame.KEYUP:
+            if evento.key == pygame.K_LEFT or evento.key == pygame.K_a:
+                teclas['esquerda'] = False
+            if evento.key == pygame.K_RIGHT or evento.key == pygame.K_d:
+                teclas['direita'] = False
+            if evento.key == pygame.K_UP or evento.key == pygame.K_w:
+                teclas['cima'] = False
+            if evento.key == pygame.K_DOWN or evento.key == pygame.K_s:
+                teclas['baixo'] = False
 
-    # preenchendo o fundo com a cor preta
-    janela.fill(PRETO)
+    if not pausado:  # Verifica se o jogo não está pausado
+        # Movendo o cenário
+        mover_cenario()
 
-    for bloco in blocos:
-        # reposicionando o bloco
-        mover(bloco, (LARGURAJANELA,ALTURAJANELA))
+        # Desenhando o cenário
+        janela.blit(imagem_cenario1, posicao_cenario1)
+        janela.blit(imagem_cenario2, posicao_cenario2)
+        janela.blit(imagem_cenario3, posicao_cenario3)
+        janela.blit(imagem_cenario4, posicao_cenario4)
 
-        # desenhando o bloco na janela
-        pygame.draw.rect(janela, bloco['cor'], bloco['objRect'])
+        # Movendo jogador
+        moverJogador(jogador, teclas, (LARGURA_JANELA, ALTURA_JANELA))
+        # Desenhando jogador
+        janela.blit(jogador['imagem'], jogador['objRect'])
 
-        # mudando a cor da bola caso colida com algum bloco
-        mudarCor = bola['objRect'].colliderect(bloco['objRect'])
-        if mudarCor:
-            bola['cor'] = bloco['cor']
-
-    # reposicionando e desenha a bola
-    mover(bola, (LARGURAJANELA, ALTURAJANELA))
-    pygame.draw.ellipse(janela, bola['cor'], bola['objRect'])
-
-    # mostrando na tela tudo o que foi desenhado
+    # Atualizando a janela
     pygame.display.update()
-
-    # limitando a 40 quadros por segundo
     relogio.tick(40)
 
-# encerrando módulos de Pygame
+# Encerrando a reprodução da música e os módulos do Pygame
+pygame.mixer.music.stop()
 pygame.quit()
