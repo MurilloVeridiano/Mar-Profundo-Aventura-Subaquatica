@@ -1,4 +1,5 @@
 import pygame
+import time
 #from pygame.sprite import _Group
 
 # Inicializando pygame
@@ -16,7 +17,7 @@ imagem_cenario4 = pygame.image.load('Imagens/cenario4.png')
 
 # Carregando as imagens do peixe
 imagemPeixe = pygame.image.load('imagens/peixe.png')
-jogador = {'objRect': pygame.Rect(10, 45, imagemPeixe.get_width(), imagemPeixe.get_height()), 'imagem': imagemPeixe, 'vel': 6}
+jimagemPeixe = pygame.transform.scale(imagemPeixe, (100, 50))
 # Ajustando o tamanho das imagens do cenário
 imagem_cenario1 = pygame.transform.scale(imagem_cenario1, (LARGURA_JANELA, ALTURA_JANELA))
 imagem_cenario2 = pygame.transform.scale(imagem_cenario2, (LARGURA_JANELA, ALTURA_JANELA))
@@ -79,6 +80,9 @@ pausado = False
 pygame.mixer.music.load('Som/musicadefundo.wav')
 pygame.mixer.music.play(-1)  # coloca -1 para reprodução ficar em looping
 
+peixe_rect = pygame.Rect(10,45,imagemPeixe.get_width(), imagemPeixe.get_height())
+velocidade_peixe=6
+
 class CenarioSprite(pygame.sprite.Sprite):
     def __init__(self, image_path, position_x):
         super().__init__()
@@ -128,9 +132,12 @@ cenario_manager = CenarioManager()
 sprites = pygame.sprite.Group(cenario_manager)
 
 # Loop do jogo
+janela = pygame.display.set_mode((LARGURA_JANELA, ALTURA_JANELA))
+pygame.display.set_caption('Imagem e Som')
 relogio = pygame.time.Clock()
+
 while deve_continuar:
-    # Checando os eventos
+    start_time = time.time()
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             deve_continuar = False
@@ -158,29 +165,26 @@ while deve_continuar:
                 teclas['direita'] = False
             if evento.key == pygame.K_UP or evento.key == pygame.K_w:
                 teclas['cima'] = False
-            if evento.key == pygame.K_DOWN or evento.key == pygame.K_s:
+            if evento.key is pygame.K_DOWN or evento.key is pygame.K_s:
                 teclas['baixo'] = False
 
-    if not pausado:  # Verifica se o jogo não está pausado
-        # Movendo o cenário
-        mover_cenario()
-
-        # Desenhando o cenário
-        janela.blit(imagem_cenario1, posicao_cenario1)
-        janela.blit(imagem_cenario2, posicao_cenario2)
-        janela.blit(imagem_cenario3, posicao_cenario3)
-        janela.blit(imagem_cenario4, posicao_cenario4)
-
+    # Verifica se o jogo não está pausado
+    if not pausado:
+        if teclas['esquerda']: peixe_rect.x -= velocidade_peixe
+        if teclas['direita']: peixe_rect.x += velocidade_peixe
+        if teclas['cima']: peixe_rect.y -= velocidade_peixe
+        if teclas['baixo']: peixe_rect.y += velocidade_peixe
+        janela.fill((0, 0, 0))  # Limpar a tela
+        cenario_manager.update()  # Atualiza os sprites do cenário
+        janela.blit(jogador['imagem'], jogador['objRect'])  # Desenhando jogador
+        janela.blit(imagemPeixe, peixe_rect)
         # Movendo jogador
-        moverJogador(jogador, teclas, (LARGURA_JANELA, ALTURA_JANELA))
-        # Desenhando jogador
-        janela.blit(jogador['imagem'], jogador['objRect'])
-    
-    cenario_manager.update()
-    janela.fill((0, 0, 0)) 
-    cenario_manager.draw(janela) 
-    # Atualizando a janela
-    pygame.display.update()
+        janela.fill((0, 0, 0))
+        cenario_manager.draw(janela)  # Desenha o cenário
+        janela.blit(imagemPeixe, peixe_rect)  # Desenha o peixe
+
+        # Atualiza a tela
+        pygame.display.update()
     relogio.tick(60)
 
 # Encerrando a reprodução da música e os módulos do Pygame
