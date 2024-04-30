@@ -16,7 +16,7 @@ imagem_cenario4 = pygame.image.load('Imagens/cenario4.png')
 
 # Carregando as imagens do peixe
 imagemPeixe = pygame.image.load('imagens/peixe.png')
-
+jogador = {'objRect': pygame.Rect(10, 45, imagemPeixe.get_width(), imagemPeixe.get_height()), 'imagem': imagemPeixe, 'vel': 6}
 # Ajustando o tamanho das imagens do cenário
 imagem_cenario1 = pygame.transform.scale(imagem_cenario1, (LARGURA_JANELA, ALTURA_JANELA))
 imagem_cenario2 = pygame.transform.scale(imagem_cenario2, (LARGURA_JANELA, ALTURA_JANELA))
@@ -79,30 +79,25 @@ pausado = False
 pygame.mixer.music.load('Som/musicadefundo.wav')
 pygame.mixer.music.play(-1)  # coloca -1 para reprodução ficar em looping
 
-class Peixe(pygame.sprite.Sprite):
-    def __init__(self):
+class CenarioSprite(pygame.sprite.Sprite):
+    def __init__(self, image_path, position_x):
         super().__init__()
-        self.sprites = []
-        # colocar mais sprites para animação
-        self.sprites.append(pygame.image.load('Imagens/peixe.png'))
-        self.atual = 0  # Índice do sprite atual
-        self.image = self.sprites[self.atual]
-        self.rect = self.image.get_rect()
-        self.frame_rate = 10  
-        self.frame_count = 0  # Contador sprites
-        self.velocidade = 5  
+        self.image = pygame.transform.scale(pygame.image.load(image_path), (LARGURA_JANELA, ALTURA_JANELA))
+        self.rect = self.image.get_rect(x=position_x, y=0)
+        self.velocity = -1  # Velocidade de movimento para a esquerda
 
     def update(self):
-        # Alterna os sprites 
-        self.frame_count += 1
-        if self.frame_count >= self.frame_rate:
-            self.frame_count = 0
-            self.atual = (self.atual + 1) % len(self.sprites)
-            self.image = self.sprites[self.atual]
-       
-        self.rect.x += self.velocidade
+        self.rect.x += self.velocity
+        if self.rect.right < 0:  # Se o sprite saiu completamente da tela
+            self.rect.x = LARGURA_JANELA * (len(self.groups()[0].sprites()) - 1)  # Reposiciona para o fim da fila
 
-
+class CenarioManager(pygame.sprite.Group):
+    def __init__(self):
+        super().__init__()
+        # Criar e adicionar sprites de cenário
+        for i in range(4):
+            sprite = CenarioSprite(f'Imagens/cenario{i+1}.png', LARGURA_JANELA * i)
+            self.add(sprite)
 # É a função para mover o cenario do Jogo
 def mover_cenario():
     global posicao_cenario1, posicao_cenario2, posicao_cenario3, posicao_cenario4 #tenho que declarar como globar pq vou mexer nas posicoes e precisa salvar
@@ -127,13 +122,13 @@ def mover_cenario():
     if posicao_cenario4[0] + LARGURA_JANELA < 0:
         posicao_cenario4 = (posicao_cenario3[0] + LARGURA_JANELA, posicao_cenario4[1])
 
-peixe_animado = Peixe()
+cenario_manager = CenarioManager()
 
 # Cria um grupo de sprites
-sprites = pygame.sprite.Group()
-sprites.add(peixe_animado)
+sprites = pygame.sprite.Group(cenario_manager)
 
 # Loop do jogo
+relogio = pygame.time.Clock()
 while deve_continuar:
     # Checando os eventos
     for evento in pygame.event.get():
@@ -181,11 +176,12 @@ while deve_continuar:
         # Desenhando jogador
         janela.blit(jogador['imagem'], jogador['objRect'])
     
-    sprites.update()
-    sprites.draw(janela)
+    cenario_manager.update()
+    janela.fill((0, 0, 0)) 
+    cenario_manager.draw(janela) 
     # Atualizando a janela
     pygame.display.update()
-    relogio.tick(40)
+    relogio.tick(60)
 
 # Encerrando a reprodução da música e os módulos do Pygame
 pygame.mixer.music.stop()
