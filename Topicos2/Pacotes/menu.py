@@ -1,8 +1,11 @@
 import tkinter as tk
 from tkinter import messagebox, Toplevel, Scale, PhotoImage
 import pygame
+import subprocess
+import os
+from Jogo import *
 
-class menu:
+class Menu:
     def __init__(self, root):
         self.root = root
         self.root.title("Mar Profundo")
@@ -11,7 +14,7 @@ class menu:
         # Inicializar Pygame Mixer
         pygame.mixer.init()
         # Carregar e tocar música de fundo
-        self.music = pygame.mixer.Sound("Som\musicadefundo.wav")
+        self.music = pygame.mixer.Sound("Som/musicadefundo.wav")
         self.music.play(-1)  
 
         # Frame principal
@@ -40,7 +43,11 @@ class menu:
         self.exit_button.pack(pady=10)
 
     def start_game(self):
-        messagebox.showinfo("Iniciar", "Jogo iniciado!")
+        self.root.destroy()  # Fechar o menu antes de iniciar o jogo
+        main_script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'main.py'))
+        #subprocess.run(["python", main_script_path])  # Executar o arquivo main.py para iniciar o jogo
+        jogo = Jogo()
+        jogo.rodar()
     
     def open_settings(self):
         self.settings_window = Toplevel(self.root)
@@ -61,7 +68,7 @@ class menu:
             pygame.mixer.quit()
             self.root.quit()
 
-# Criar a janela principal e passar para a classe Jogo
-root = tk.Tk()  # Inicializa a janela principal
-app = menu(root)
-root.mainloop()
+#if __name__ == "__main__":
+#    root = tk.Tk()  # Inicializa a janela principal
+#    app = Menu(root)
+#    root.mainloop()
