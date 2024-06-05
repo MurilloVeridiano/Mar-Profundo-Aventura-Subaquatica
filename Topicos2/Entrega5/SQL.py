@@ -1,56 +1,41 @@
-import pygame
-from configuracoes import LARGURA_JANELA, ALTURA_JANELA
-from mover_jogador import MoverJogador
-from gerenciar_objetos import GerenciarObjetos
-from gerenciar_cenario import GerenciarCenario
-from detectar_colisoes import ChecarColisoes
-from gerenciar_som import iniciar_som, parar_som
-from atualizar_tela import AtualizarTela
-import tkinter as tk
-from tkinter import messagebox, Toplevel, Scale, PhotoImage
-from menu import *
+#SQL.py
+from getpass import getpass
+from mysql.connector import connect, Error
 
-class Jogo:
-    def __init__(self):
-        pygame.init()
-        self.janela = pygame.display.set_mode((LARGURA_JANELA, ALTURA_JANELA))
-        pygame.display.set_caption('Aventura Sub-Aquatica')
-        self.relogio = pygame.time.Clock() 
-        self.fonte_pontos = pygame.font.SysFont('bebaskai', 25)
-        self.pausado = False
-        self.pontos = 0
-        running = True
-        self.cenario = GerenciarCenario(self.janela)
-        self.gerenciar_objetos = GerenciarObjetos(self.cenario)
-        self.mover_jogador = MoverJogador(self.gerenciar_objetos)
-        self.checar_colisoes = ChecarColisoes(self.gerenciar_objetos)
-        self.atualizar_tela = AtualizarTela(self.janela, self.fonte_pontos, self.cenario, self.gerenciar_objetos, self.checar_colisoes)
-        
-        iniciar_som()
+def run_query(hosts, port, db_query):
+    try:
+        result_all = []
+        for host in hosts:
+            print(f'Host: {host}')
+            username = "user_game"#input("Enter username: ")
+            password = "123"#getpass("Enter password: ")
+            print(f'Debug: username = {username}, password = {password}')  # Apenas para debug
+            try:
+                with connect(host=host, port=port, user=username, password=password) as connection:
+                    with connection.cursor() as cursor:
+                        res = cursor.execute(db_query, multi=True)
+                        for result in res:
+                            if result.with_rows:
+                                print("Rows produced by statement '{}':".format(result.statement))
+                                res_list = result.fetchall()
+                                for row in res_list:
+                                    print(row)
+                                result_all.append(res_list)
+                            else:
+                                print("Number of rows affected by statement '{}': {}".format(
+                                    result.statement, result.rowcount))
+                    connection.commit()
+            except Error as e:
+                print(f"Error connecting to MySQL: {e}")
+        return result_all
+    except Error as e:
+        print(f"Error running query: {e}")
 
-    def rodar(self):
-        deve_continuar = True
-        while deve_continuar:
-            for evento in pygame.event.get():
-                if evento.type == pygame.QUIT:
-                    deve_continuar = False
-                elif evento.type == pygame.KEYDOWN:
-                    if evento.key == pygame.K_p:
-                        self.pausado = not self.pausado
-                        if self.pausado:
-                            pygame.mixer.music.pause()
-                        else:
-                            pygame.mixer.music.unpause()
-                self.mover_jogador.tratar_eventos(evento)
-
-            if not self.pausado:
-                self.cenario.mover_cenario()
-                self.mover_jogador.mover_jogador()
-                self.checar_colisoes.checar_colisoes()
-                self.atualizar_tela.atualizar_tela()
-                self.pontos = self.checar_colisoes.pontos
-
-            self.relogio.tick(40)
-
-        parar_som()
-        pygame.quit()
+if __name__ == '__main__':
+    hosts = ['localhost']
+    port = 3306
+    db_query = 'USE game; SELECT hi_score FROM score WHERE idscore = 1;'
+    res_list = run_query(hosts, port, db_query)
+    print("RESULT ALL")
+    for row in res_list:
+        print(row)
