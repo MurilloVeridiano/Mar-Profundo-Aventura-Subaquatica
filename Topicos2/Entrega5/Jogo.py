@@ -6,24 +6,21 @@ from gerenciar_cenario import GerenciarCenario
 from detectar_colisoes import ChecarColisoes
 from gerenciar_som import iniciar_som, parar_som
 from atualizar_tela import AtualizarTela
-import tkinter as tk
-from tkinter import messagebox, Toplevel, Scale, PhotoImage
-from menu import *
+from SQL import update_hi_score  # Garanta que você importou esta função
 
 class Jogo:
     def __init__(self):
         pygame.init()
         self.janela = pygame.display.set_mode((LARGURA_JANELA, ALTURA_JANELA))
         pygame.display.set_caption('Aventura Sub-Aquatica')
-        self.relogio = pygame.time.Clock() 
+        self.relogio = pygame.time.Clock()
         self.fonte_pontos = pygame.font.SysFont('bebaskai', 25)
         self.pausado = False
         self.pontos = 0
-        running = True
         self.cenario = GerenciarCenario(self.janela)
         self.gerenciar_objetos = GerenciarObjetos(self.cenario)
         self.mover_jogador = MoverJogador(self.gerenciar_objetos)
-        self.checar_colisoes = ChecarColisoes(self.gerenciar_objetos)
+        self.checar_colisoes = ChecarColisoes(self.gerenciar_objetos, self.cenario)
         self.atualizar_tela = AtualizarTela(self.janela, self.fonte_pontos, self.cenario, self.gerenciar_objetos, self.checar_colisoes)
         
         iniciar_som()
@@ -44,13 +41,19 @@ class Jogo:
                 self.mover_jogador.tratar_eventos(evento)
 
             if not self.pausado:
+                self.checar_colisoes.checar_colisoes()
                 self.cenario.mover_cenario()
                 self.mover_jogador.mover_jogador()
-                self.checar_colisoes.checar_colisoes()
                 self.atualizar_tela.atualizar_tela()
                 self.pontos = self.checar_colisoes.pontos
 
             self.relogio.tick(40)
 
+        # Atualiza o hi_score no banco de dados se a pontuação atual for maior
+        if self.pontos > self.atualizar_tela.hi_score:
+            update_hi_score(self.pontos)
+
         parar_som()
         pygame.quit()
+
+
