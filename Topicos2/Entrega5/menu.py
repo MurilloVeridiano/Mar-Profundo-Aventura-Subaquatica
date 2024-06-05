@@ -1,3 +1,4 @@
+#menu.py
 import tkinter as tk
 from tkinter import messagebox, Toplevel, Scale, PhotoImage
 import pygame
@@ -12,7 +13,10 @@ class Menu:
         self.root.geometry("400x500")
         
         # Inicializar Pygame Mixer
-        pygame.mixer.init() 
+        pygame.mixer.init()
+        # Carregar e tocar música de fundo
+        #self.music = pygame.mixer.Sound("Som/musicadefundo.wav")
+        #self.music.play(-1)  
 
         # Frame principal
         self.main_menu = tk.Frame(root)
@@ -65,3 +69,7 @@ class Menu:
             pygame.mixer.quit()
             self.root.quit()
 
+#if __name__ == "__main__":
+#    root = tk.Tk()  # Inicializa a janela principal
+#    app = Menu(root)
+#    root.mainloop()
