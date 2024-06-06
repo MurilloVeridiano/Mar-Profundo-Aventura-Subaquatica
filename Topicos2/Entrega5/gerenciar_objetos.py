@@ -2,7 +2,7 @@ import pygame
 from configuracoes import VEL
 
 class GerenciarObjetos:
-    def __init__(self, cenario):
+    def __init__(self,cenario):
         # Inicializa jogador
         self.jogador = {
             'objRect': pygame.Rect(50, 50, cenario.peixe.get_width(), cenario.peixe.get_height()),
