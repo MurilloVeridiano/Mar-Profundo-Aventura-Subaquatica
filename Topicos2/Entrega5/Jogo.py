@@ -1,63 +1,56 @@
-from mysql.connector import connect, Error
+import pygame
+from configuracoes import LARGURA_JANELA, ALTURA_JANELA
+from mover_jogador import MoverJogador
+from gerenciar_objetos import GerenciarObjetos
+from gerenciar_cenario import GerenciarCenario
+from detectar_colisoes import ChecarColisoes
+from gerenciar_som import iniciar_som, parar_som
+from atualizar_tela import AtualizarTela
+import tkinter as tk
+from tkinter import messagebox, Toplevel, Scale, PhotoImage
+from menu import *
+from SQL import *
 
-def run_query(hosts, port, db_query, user, password):
-    try:
-        result_all = []
-        for host in hosts:
-            print(f'Host: {host}')
-            print(f'Debug: username = {user}, password = {password}')  # Apenas para debug
-            try:
-                connection = connect(host=host, port=port, user=user, password=password, database='game')
-                try:
-                    with connection.cursor() as cursor:
-                        res = cursor.execute(db_query, multi=True)
-                        for result in res:
-                            if result.with_rows:
-                                print("Rows produced by statement '{}':".format(result.statement))
-                                res_list = result.fetchall()
-                                for row in res_list:
-                                    print(row)
-                                result_all.append(res_list)
-                            else:
-                                print("Number of rows affected by statement '{}': {}".format(result.statement, result.rowcount))
-                    connection.commit()
-                finally:
-                    connection.close()
-            except Error as e:
-                print(f"Error connecting to MySQL: {e}")
-        return result_all
-    except Error as e:
-        print(f"Error running query: {e}")
+class Jogo:
+    def __init__(self, nome_jogador):
+        pygame.init()
+        self.janela = pygame.display.set_mode((LARGURA_JANELA, ALTURA_JANELA))
+        pygame.display.set_caption('Aventura Sub-Aquatica')
+        self.relogio = pygame.time.Clock() 
+        self.fonte_pontos = pygame.font.SysFont('bebaskai', 25)
+        self.pausado = False
+        self.pontos = 0
+        self.cenario = GerenciarCenario(self.janela)
+        self.gerenciar_objetos = GerenciarObjetos(self.cenario)
+        self.mover_jogador = MoverJogador(self.gerenciar_objetos)
+        self.checar_colisoes = ChecarColisoes(self.gerenciar_objetos, self.cenario) 
+        self.atualizar_tela = AtualizarTela(self.janela, self.fonte_pontos, self.cenario, self.gerenciar_objetos, self.checar_colisoes, nome_jogador)
+        
+        iniciar_som()
 
-def register_user(name, password):
-    hosts = ['localhost']
-    port = 3306
-    user = 'user_game'
-    pwd = '123'
-    
-    add_user_query = f"USE game; INSERT INTO score (nome, hi_score, senha) VALUES ('{name}', 0, '{password}')"
-    try:
-        run_query(hosts, port, add_user_query, user, pwd)
-    except Error as e:
-        print(f"Erro: {e}")
+    def rodar(self):
+        deve_continuar = True
+        while deve_continuar:
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    deve_continuar = False
+                elif evento.type == pygame.KEYDOWN:
+                    if evento.key == pygame.K_p:
+                        self.pausado = not self.pausado
+                        if self.pausado:
+                            pygame.mixer.music.pause()
+                        else:
+                            pygame.mixer.music.unpause()
+                self.mover_jogador.tratar_eventos(evento)
 
-def check_login(name, password):
-    hosts = ['localhost']
-    port = 3306
-    user = 'user_game'
-    pwd = '123'
-    
-    check_user_query = f"USE game; SELECT * FROM score WHERE nome = '{name}' AND senha = '{password}'"
-    result = run_query(hosts, port, check_user_query, user, pwd)
-    if result and result[0]:
-        return True
-    else:
-        return False
+            if not self.pausado:
+                self.cenario.mover_cenario()
+                self.mover_jogador.mover_jogador()
+                self.checar_colisoes.checar_colisoes()
+                self.atualizar_tela.atualizar_tela()
+                self.pontos = self.checar_colisoes.pontos
 
-def update_hi_score(name, new_hi_score):
-    hosts = ['localhost']
-    port = 3306
-    user = 'user_game'
-    pwd = '123'
-    db_query = f"USE game; UPDATE score SET hi_score = {new_hi_score} WHERE nome = '{name}';"
-    run_query(hosts, port, db_query, user, pwd)
+            self.relogio.tick(40)
+
+        parar_som()
+        pygame.quit()
