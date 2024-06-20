@@ -35,16 +35,7 @@ class Jogo:
         
         iniciar_som()
 
-        class SocketServer:
-            def __init__(self, host, port):
-        # Inicialização anterior
-             self.game_manager = GerenciarObjetos()
-
-    def handle_client(self, conn, addr):
-        # Código existente para receber dados
-                obj = pickle.loads(data)
-                self.game_manager.update_game(obj)  # Atualiza o jogo
-
+        
     def mostrar_instrucoes(self):
         mostrar_instrucoes(self.janela, self.fonte_instrucoes, self.cenario, self.gerenciar_objetos)
         esperando_comeco = True
@@ -179,3 +170,13 @@ class Jogo:
         if self.pontos > hi_score:
             update_hi_score(self.nome_jogador, self.pontos)
         print(f'Salvando pontuação: {self.pontos}')
+        
+class SocketServer:
+            def __init__(self, host, port):
+        # Inicialização anterior
+             self.game_manager = GerenciarCenario()
+
+             def handle_client(self, conn, addr):
+        # Código existente para receber dados
+                obj = pickle.loads(self)
+                self.game_manager.update_game(obj)  # Atualiza o jogo
