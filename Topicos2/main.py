@@ -14,7 +14,7 @@ imagem_cenario3 = pygame.image.load('Imagens/cenario3.png')
 imagem_cenario4 = pygame.image.load('Imagens/cenario4.png')
 
 # Carregando as imagens do peixe
-imagemPeixe = pygame.image.load('imagens/peixe.png')
+imagemPeixe = pygame.image.load('Imagens/peixe.png')
 
 # Ajustando o tamanho das imagens do cenário
 imagem_cenario1 = pygame.transform.scale(imagem_cenario1, (LARGURA_JANELA, ALTURA_JANELA))
@@ -75,7 +75,7 @@ deve_continuar = True
 pausado = False
 
 # Carregando e reproduzindo a música de fundo em loop
-pygame.mixer.music.load('Som/musicadefundo.wav')
+pygame.mixer.music.load('Sons/musicadefundo.wav')
 pygame.mixer.music.play(-1)  # coloca -1 para reprodução ficar em looping
 
 # É a função para mover o cenario do Jogo
